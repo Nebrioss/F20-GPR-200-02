@@ -4,7 +4,7 @@
 
 #include "vec3.h"
 
-
+//raycasting class
 class ray {
 public:
     ray() {}

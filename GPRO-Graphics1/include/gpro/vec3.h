@@ -53,7 +53,7 @@ public:
 public:
     double e[3];
 };
-//overloads opperators for more unversal usage
+//overloads operators for more universal usage
 inline std::ostream& operator<<(std::ostream& out, const vect3& v) {
     return out << v.e[0] << ' ' << v.e[1] << ' ' << v.e[2];
 }
