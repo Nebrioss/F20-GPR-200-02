@@ -38,6 +38,8 @@
 
 using std::sqrt;
 
+
+// sets the color of the reytracing
 color ray_color(const ray& r, const hittable& world) {
 	hit_record rec;
 	if (world.hit(r, 0, INFINITY, rec)) {
@@ -74,19 +76,18 @@ void testVector()
 
 int main() {
 
-	// Image
-
+   //Displays the circle
 	const auto aspect_ratio = 16.0 / 9.0;
 	const int image_width = 400;
 	const int image_height = static_cast<int>(image_width / aspect_ratio);
 
-	// World
+	//backround
 	hittable_list world;
 	world.add(make_shared<sphere>(point3(0, 0, -1), 0.5));
 	world.add(make_shared<sphere>(point3(0, -100.5, -1), 100));
 
-	// Camera
-
+	
+//angle the sphere is seen from
 	auto viewport_height = 2.0;
 	auto viewport_width = aspect_ratio * viewport_height;
 	auto focal_length = 1.0;
@@ -96,7 +97,7 @@ int main() {
 	auto vertical = vect3(0, viewport_height, 0);
 	auto lower_left_corner = origin - horizontal / 2 - vertical / 2 - vect3(0, 0, focal_length);
 
-	// Render
+	//renders the program into a .ppm which allows us to view our shader
 
 	std::ofstream outFile("image.ppm");
 

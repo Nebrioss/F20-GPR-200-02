@@ -10,6 +10,7 @@
 using std::shared_ptr;
 using std::make_shared;
 
+//connects what was hit to the list its stored in
 class hittable_list : public hittable {
 public:
     hittable_list() {}

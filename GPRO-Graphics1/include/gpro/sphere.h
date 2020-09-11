@@ -5,6 +5,8 @@
 #include "hittable.h"
 #include "vec3.h"
 
+
+//allows "hit" detection on the sphere
 class sphere : public hittable {
 public:
     sphere() {}
@@ -18,6 +20,8 @@ public:
     double radius;
 };
 
+
+//boolean checking if the shere was "hit"
 bool sphere::hit(const ray& r, double t_min, double t_max, hit_record& rec) const {
     vect3 oc = r.origin() - center;
     auto a = r.direction().length_squared();

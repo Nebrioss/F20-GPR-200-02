@@ -7,6 +7,8 @@
 
 using std::sqrt;
 
+
+//renamed to vect3 to avoid clashing naming conentions
 class vect3 {
 public:
     vect3() : e{ 0,0,0 } {}
@@ -51,7 +53,7 @@ public:
 public:
     double e[3];
 };
-
+//overloads opperators for more unversal usage
 inline std::ostream& operator<<(std::ostream& out, const vect3& v) {
     return out << v.e[0] << ' ' << v.e[1] << ' ' << v.e[2];
 }
@@ -96,9 +98,8 @@ inline vect3 unit_vector(vect3 v) {
     return v / v.length();
 }
 
-// Type aliases for vect3
-using point3 = vect3;   // 3D point
-using color = vect3;    // RGB color
+using point3 = vect3;  
+using color = vect3;   
 
 #endif
 

@@ -4,6 +4,8 @@
 
 #include "ray.h"
 
+
+//records what direction the sphere was hit form
 struct hit_record {
     point3 p;
     vect3 normal;
@@ -16,6 +18,7 @@ struct hit_record {
     }
 };
 
+//yes or no boolean checking for contact
 class hittable {
 public:
     virtual bool hit(const ray& r, double t_min, double t_max, hit_record& rec) const = 0;
