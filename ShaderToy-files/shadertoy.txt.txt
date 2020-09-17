@@ -1,21 +1,38 @@
+/*
+	Author: Ryan Koczalka
+	Class: GPR-200-02
+	Assignment: Lab 2
+	Description: a variety of shader effects to help me understand more about GLSL
+
+	Certification of Authenticity:
+	I certify that this is entirely my own work, except where I have given fullydocumented references to the work of others. I understand the definition and
+	consequences of plagiarism and acknowledge that the assessor of this assignment
+	may, for the purpose of assessing this assignment:
+		- Reproduce this assignment and provide a copy to another member of
+		academic staff; and/or
+		- Communicate a copy of this assignment to a plagiarism checking service
+        (which may then retain a copy of this assignment on its database for
+		the purpose of future plagiarism checking)
+*/
+
+/*
+	pre: fragCoord exists
+	post: vec4 containing color
+	purpose: determines the color of a pixel to make static gradient
+*/
 vec4 myEffect0(in vec2 fragCoord)
 {
-    //R -> horiz
-    //G -> vert
-    //B?
-    //A?
-
-    //final : red-green gradient
-
-    vec2 uv = fragCoord / iResolution.xy;
-
-  	vec3 color = vec3(uv, 0.25);
-
-    return vec4(uv, 0.0, 1.0);
+    return vec4(fragCoord / iResolution.xy, 0.0, 1.0);
 }
 
+/*
+	pre: fragCoord and resolution exist
+	post: vec4 containing color
+	purpose: determines the color of a pixel to make a static checkerboard
+*/
 vec4 myEffect1(in vec2 fragCoord, in vec2 resolution)
 {
+    // booleans to determine color of pixel in square
     bool whiteCol = false, whiteRow = false;
     
     if (mod(fragCoord.x / 50.0, 2.0) > 1.0)
@@ -23,18 +40,26 @@ vec4 myEffect1(in vec2 fragCoord, in vec2 resolution)
     
     if (mod(fragCoord.y / 50.0, 2.0) > 1.0)
         whiteRow = true;
-        
+    
+    // determines color of pixel in square
     if (whiteCol != whiteRow)
         return vec4(0.0, 0.0, 0.0, 1.0);
     else
         return vec4(1.0, 1.0, 1.0, 1.0);   
 }
 
+/*
+	pre: fragCoord and resolution exist
+	post: vec4 containing color
+	purpose: determines the color of a pixel to make a static circle
+*/
 vec4 myEffect2(in vec2 fragCoord, in vec2 resolution)
 {
+    // determining important values for circle
     vec2 center = resolution.xy * 0.5 + 100.0 * vec2(cos(5.0 * iTime), sin(5.0 * iTime));
     float radius = resolution.y * 0.05;
     
+    // determines if pixel is in circle
     float dist = length(fragCoord.xy - center);
     if (dist < radius)
         return vec4(0.25 * dist / radius, 0.5, 1.0 - dist / radius, 1.0);
@@ -42,11 +67,19 @@ vec4 myEffect2(in vec2 fragCoord, in vec2 resolution)
     return vec4(0.0, 0.0, 0.0, 1.0);
 }
 
+/*
+	pre: fragCoord and resolution exist
+	post: vec4 containing color
+	purpose: determines the color of a pixel to make a psychedelic effect
+*/
 vec4 myEffect3(in vec2 fragCoord, in vec2 resolution)
 {    
+    // booleans to determine color of pixel in square
     bool whiteCol = false, whiteRow = false;
+    // vec3 to store color information
     vec3 color;
     
+    // determines center of each circle used
     vec2 center1 = resolution.xy * 0.5 + (resolution.y * 0.2) * vec2(cos(5.0 * iTime), sin(5.0 * iTime));
     vec2 center2 = resolution.xy * 0.5 + (resolution.y * 0.2) * vec2(-sin(5.0 * iTime), cos(5.0 * iTime));
     vec2 center3 = resolution.xy * 0.5 - (resolution.y * 0.2) * vec2(cos(5.0 * iTime), sin(5.0 * iTime));
@@ -64,9 +97,11 @@ vec4 myEffect3(in vec2 fragCoord, in vec2 resolution)
     vec2 center15 = resolution.xy * 0.5 - (resolution.y * sin(iTime)) * vec2(-cos(5.0 * iTime), sin(5.0 * iTime));
     vec2 center16 = resolution.xy * 0.5 - (resolution.y * sin(iTime)) * vec2(sin(5.0 * iTime), cos(5.0 * iTime));
     
+    // determines the radius of two circle sizes
     float radius1 = resolution.y * 0.05;
     float radius2 = resolution.y * 0.1;
     
+    // determines if pixel is in one of the circles
     float dist1 = length(fragCoord.xy - center1);
     float dist2 = length(fragCoord.xy - center2);
     float dist3 = length(fragCoord.xy - center3);
@@ -84,12 +119,14 @@ vec4 myEffect3(in vec2 fragCoord, in vec2 resolution)
     float dist15 = length(fragCoord.xy - center15);
     float dist16 = length(fragCoord.xy - center16);
     
+    // determines if pixel belongs in checkerboard
     if (mod(fragCoord.x / (resolution.y / (9.0 * cos((2.0 / 3.0) * iTime))), 2.0) > 1.0)
         whiteCol = true;
     
     if (mod(fragCoord.y / (resolution.y / (9.0 * cos(0.5 * iTime))), 2.0) > 1.0)
         whiteRow = true;
         
+    // determines if pixel belongs in circle
     if (dist1 < radius1 || dist2 < radius1 || dist3 < radius1 || dist4 < radius1 || dist5 < radius1 || dist6 < radius1 || dist7 < radius1 || dist8 < radius1)
         color = 0.5 + 0.5 * sin(iTime + (fragCoord / resolution).xyx + vec3(0, 2, 4));
     else if (dist9 < radius2 || dist10 < radius2 || dist11 < radius2 || dist12 < radius2 || dist13 < radius2 || dist14 < radius2 || dist15 < radius2 || dist16 < radius2)
@@ -98,6 +135,8 @@ vec4 myEffect3(in vec2 fragCoord, in vec2 resolution)
         color = 0.5 + 0.5 * cos(iTime + (fragCoord / resolution).xyx + vec3(0, 2, 4));
     else
         color = 0.5 + 0.5 * cos(iTime + (-fragCoord / resolution).xyx + vec3(0, 2, 4));
+    
+        // returns color of pixel
     return vec4(color, 1.0);
 }
 
