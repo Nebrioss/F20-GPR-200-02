@@ -30,8 +30,21 @@ vec4 myEffect1(in vec2 fragCoord, in vec2 resolution)
         return vec4(1.0, 1.0, 1.0, 1.0);   
 }
 
+vec4 myEffect2(in vec2 fragCoord, in vec2 resolution)
+{
+    vec2 center = resolution.xy * 0.5;
+    float radius = resolution.y * 0.2;
+    
+    float dist = length(fragCoord.xy - center);
+    if (dist < radius)
+        return vec4(1.0, 1.0, 1.0, 1.0);
+    
+    return vec4(0.0, 0.0, 0.0, 1.0);
+}
+
 void mainImage(out vec4 fragColor, in vec2 fragCoord)
 {
     //fragColor = myEffect0(fragCoord);
-    fragColor = myEffect1(fragCoord, iResolution.xy);
+    //fragColor = myEffect1(fragCoord, iResolution.xy);
+    fragColor = myEffect2(fragCoord, iResolution.xy);
 }
