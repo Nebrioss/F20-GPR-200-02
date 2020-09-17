@@ -32,19 +32,79 @@ vec4 myEffect1(in vec2 fragCoord, in vec2 resolution)
 
 vec4 myEffect2(in vec2 fragCoord, in vec2 resolution)
 {
-    vec2 center = resolution.xy * 0.5;
-    float radius = resolution.y * 0.2;
+    vec2 center = resolution.xy * 0.5 + 100.0 * vec2(cos(5.0 * iTime), sin(5.0 * iTime));
+    float radius = resolution.y * 0.05;
     
     float dist = length(fragCoord.xy - center);
     if (dist < radius)
-        return vec4(1.0, 1.0, 1.0, 1.0);
+        return vec4(0.25 * dist / radius, 0.5, 1.0 - dist / radius, 1.0);
     
     return vec4(0.0, 0.0, 0.0, 1.0);
+}
+
+vec4 myEffect3(in vec2 fragCoord, in vec2 resolution)
+{    
+    bool whiteCol = false, whiteRow = false;
+    vec3 color;
+    
+    vec2 center1 = resolution.xy * 0.5 + (resolution.y * 0.2) * vec2(cos(5.0 * iTime), sin(5.0 * iTime));
+    vec2 center2 = resolution.xy * 0.5 + (resolution.y * 0.2) * vec2(-sin(5.0 * iTime), cos(5.0 * iTime));
+    vec2 center3 = resolution.xy * 0.5 - (resolution.y * 0.2) * vec2(cos(5.0 * iTime), sin(5.0 * iTime));
+    vec2 center4 = resolution.xy * 0.5 - (resolution.y * 0.2) * vec2(-sin(5.0 * iTime), cos(5.0 * iTime));
+    vec2 center5 = resolution.xy * 0.5 + (resolution.y * 0.35) * vec2(-cos(5.0 * iTime), sin(5.0 * iTime));
+    vec2 center6 = resolution.xy * 0.5 + (resolution.y * 0.35) * vec2(sin(5.0 * iTime), cos(5.0 * iTime));
+    vec2 center7 = resolution.xy * 0.5 - (resolution.y * 0.35) * vec2(-cos(5.0 * iTime), sin(5.0 * iTime));
+    vec2 center8 = resolution.xy * 0.5 - (resolution.y * 0.35) * vec2(sin(5.0 * iTime), cos(5.0 * iTime));
+    vec2 center9 = resolution.xy * 0.5 + (resolution.y * cos(iTime)) * vec2(cos(5.0 * iTime), sin(5.0 * iTime));
+    vec2 center10 = resolution.xy * 0.5 + (resolution.y * cos(iTime)) * vec2(-sin(5.0 * iTime), cos(5.0 * iTime));
+    vec2 center11 = resolution.xy * 0.5 - (resolution.y * cos(iTime)) * vec2(cos(5.0 * iTime), sin(5.0 * iTime));
+    vec2 center12 = resolution.xy * 0.5 - (resolution.y * cos(iTime)) * vec2(-sin(5.0 * iTime), cos(5.0 * iTime));
+    vec2 center13 = resolution.xy * 0.5 + (resolution.y * sin(iTime)) * vec2(-cos(5.0 * iTime), sin(5.0 * iTime));
+    vec2 center14 = resolution.xy * 0.5 + (resolution.y * sin(iTime)) * vec2(sin(5.0 * iTime), cos(5.0 * iTime));
+    vec2 center15 = resolution.xy * 0.5 - (resolution.y * sin(iTime)) * vec2(-cos(5.0 * iTime), sin(5.0 * iTime));
+    vec2 center16 = resolution.xy * 0.5 - (resolution.y * sin(iTime)) * vec2(sin(5.0 * iTime), cos(5.0 * iTime));
+    
+    float radius1 = resolution.y * 0.05;
+    float radius2 = resolution.y * 0.1;
+    
+    float dist1 = length(fragCoord.xy - center1);
+    float dist2 = length(fragCoord.xy - center2);
+    float dist3 = length(fragCoord.xy - center3);
+    float dist4 = length(fragCoord.xy - center4);
+    float dist5 = length(fragCoord.xy - center5);
+    float dist6 = length(fragCoord.xy - center6);
+    float dist7 = length(fragCoord.xy - center7);
+    float dist8 = length(fragCoord.xy - center8);
+    float dist9 = length(fragCoord.xy - center9);
+    float dist10 = length(fragCoord.xy - center10);
+    float dist11 = length(fragCoord.xy - center11);
+    float dist12 = length(fragCoord.xy - center12);
+    float dist13 = length(fragCoord.xy - center13);
+    float dist14 = length(fragCoord.xy - center14);
+    float dist15 = length(fragCoord.xy - center15);
+    float dist16 = length(fragCoord.xy - center16);
+    
+    if (mod(fragCoord.x / (resolution.y / (9.0 * cos((2.0 / 3.0) * iTime))), 2.0) > 1.0)
+        whiteCol = true;
+    
+    if (mod(fragCoord.y / (resolution.y / (9.0 * cos(0.5 * iTime))), 2.0) > 1.0)
+        whiteRow = true;
+        
+    if (dist1 < radius1 || dist2 < radius1 || dist3 < radius1 || dist4 < radius1 || dist5 < radius1 || dist6 < radius1 || dist7 < radius1 || dist8 < radius1)
+        color = 0.5 + 0.5 * sin(iTime + (fragCoord / resolution).xyx + vec3(0, 2, 4));
+    else if (dist9 < radius2 || dist10 < radius2 || dist11 < radius2 || dist12 < radius2 || dist13 < radius2 || dist14 < radius2 || dist15 < radius2 || dist16 < radius2)
+        color = 0.5 + 0.5 * -sin(iTime + (fragCoord / resolution).xyx + vec3(0, 2, 4));
+    else if (whiteCol != whiteRow)
+        color = 0.5 + 0.5 * cos(iTime + (fragCoord / resolution).xyx + vec3(0, 2, 4));
+    else
+        color = 0.5 + 0.5 * cos(iTime + (-fragCoord / resolution).xyx + vec3(0, 2, 4));
+    return vec4(color, 1.0);
 }
 
 void mainImage(out vec4 fragColor, in vec2 fragCoord)
 {
     //fragColor = myEffect0(fragCoord);
     //fragColor = myEffect1(fragCoord, iResolution.xy);
-    fragColor = myEffect2(fragCoord, iResolution.xy);
+    //fragColor = myEffect2(fragCoord, iResolution.xy);
+    fragColor = myEffect3(fragCoord, iResolution.xy);
 }
