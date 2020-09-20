@@ -1,149 +1,287 @@
 /*
-	Author: Ryan Koczalka
-	Class: GPR-200-02
-	Assignment: Lab 2
-	Description: a variety of shader effects to help me understand more about GLSL
+	Copyright 2020 Dan Buckstein
+	Copyright 2020 Ryan Koczalka
+	Copyright 2020 Demetrius J Nekos
 
-	Certification of Authenticity:
-	I certify that this is entirely my own work, except where I have given fullydocumented references to the work of others. I understand the definition and
-	consequences of plagiarism and acknowledge that the assessor of this assignment
-	may, for the purpose of assessing this assignment:
-		- Reproduce this assignment and provide a copy to another member of
-		academic staff; and/or
-		- Communicate a copy of this assignment to a plagiarism checking service
-        (which may then retain a copy of this assignment on its database for
-		the purpose of future plagiarism checking)
+	Licensed under the Apache License, Version 2.0 (the "License");
+	you may not use this file except in compliance with the License.
+	You may obtain a copy of the License at
+		http://www.apache.org/licenses/LICENSE-2.0
+	Unless required by applicable law or agreed to in writing, software
+	distributed under the License is distributed on an "AS IS" BASIS,
+	WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+	See the License for the specific language governing permissions and
+	limitations under the License.
 */
 
-/*
-	pre: fragCoord exists
-	post: vec4 containing color
-	purpose: determines the color of a pixel to make static gradient
-*/
-vec4 myEffect0(in vec2 fragCoord)
-{
-    return vec4(fragCoord / iResolution.xy, 0.0, 1.0);
+int xorshift(in int value) {
+    // taken from zeh's work: https://www.shadertoy.com/view/tsf3Dn
+    // Xorshift*32
+    // Based on George Marsaglia's work: http://www.jstatsoft.org/v08/i14/paper
+    value ^= value << 13;
+    value ^= value >> 17;
+    value ^= value << 5;
+    return value;
 }
 
-/*
-	pre: fragCoord and resolution exist
-	post: vec4 containing color
-	purpose: determines the color of a pixel to make a static checkerboard
-*/
-vec4 myEffect1(in vec2 fragCoord, in vec2 resolution)
-{
-    // booleans to determine color of pixel in square
-    bool whiteCol = false, whiteRow = false;
-    
-    if (mod(fragCoord.x / 50.0, 2.0) > 1.0)
-        whiteCol = true;
-    
-    if (mod(fragCoord.y / 50.0, 2.0) > 1.0)
-        whiteRow = true;
-    
-    // determines color of pixel in square
-    if (whiteCol != whiteRow)
-        return vec4(0.0, 0.0, 0.0, 1.0);
-    else
-        return vec4(1.0, 1.0, 1.0, 1.0);   
+
+float nextFloat(in int seed) {
+    // taken from zeh's work: https://www.shadertoy.com/view/tsf3Dn
+    seed = xorshift(seed);
+    // FIXME: This should have been a seed mapped from MIN..MAX to 0..1 instead
+    return abs(fract(float(seed) / 3141.592653));
 }
 
-/*
-	pre: fragCoord and resolution exist
-	post: vec4 containing color
-	purpose: determines the color of a pixel to make a static circle
-*/
-vec4 myEffect2(in vec2 fragCoord, in vec2 resolution)
-{
-    // determining important values for circle
-    vec2 center = resolution.xy * 0.5 + 100.0 * vec2(cos(5.0 * iTime), sin(5.0 * iTime));
-    float radius = resolution.y * 0.05;
-    
-    // determines if pixel is in circle
-    float dist = length(fragCoord.xy - center);
-    if (dist < radius)
-        return vec4(0.25 * dist / radius, 0.5, 1.0 - dist / radius, 1.0);
-    
-    return vec4(0.0, 0.0, 0.0, 1.0);
+float nextFloat(in int seed, in float max) {
+    // taken from zeh's work: https://www.shadertoy.com/view/tsf3Dn    
+    return nextFloat(seed) * max;
 }
 
-/*
-	pre: fragCoord and resolution exist
-	post: vec4 containing color
-	purpose: determines the color of a pixel to make a psychedelic effect
-*/
-vec4 myEffect3(in vec2 fragCoord, in vec2 resolution)
-{    
-    // booleans to determine color of pixel in square
-    bool whiteCol = false, whiteRow = false;
-    // vec3 to store color information
-    vec3 color;
+
+// calcViewport: calculate the viewing plane (viewport) coordinate
+//    viewport:       output viewing plane coordinate
+//    ndc:            output normalized device coordinate
+//    uv:             output screen-space coordinate
+//    aspect:         output aspect ratio of screen
+//    resolutionInv:  output reciprocal of resolution
+//    viewportHeight: input height of viewing plane
+//    fragCoord:      input coordinate of current fragment (in pixels)
+//    resolution:     input resolution of screen (in pixels)
+//	  seed:			  used for seeding the random sample
+void calcViewport(out vec2 viewport, out vec2 ndc, out vec2 uv,
+                  out float aspect, out vec2 resolutionInv,
+                  in float viewportHeight, in vec2 fragCoord, in vec2 resolution,
+                  in float seed)
+{
+    // inverse (reciprocal) resolution = 1 / resolution
+    resolutionInv = 1.0 / resolution;
     
-    // determines center of each circle used
-    vec2 center1 = resolution.xy * 0.5 + (resolution.y * 0.2) * vec2(cos(5.0 * iTime), sin(5.0 * iTime));
-    vec2 center2 = resolution.xy * 0.5 + (resolution.y * 0.2) * vec2(-sin(5.0 * iTime), cos(5.0 * iTime));
-    vec2 center3 = resolution.xy * 0.5 - (resolution.y * 0.2) * vec2(cos(5.0 * iTime), sin(5.0 * iTime));
-    vec2 center4 = resolution.xy * 0.5 - (resolution.y * 0.2) * vec2(-sin(5.0 * iTime), cos(5.0 * iTime));
-    vec2 center5 = resolution.xy * 0.5 + (resolution.y * 0.35) * vec2(-cos(5.0 * iTime), sin(5.0 * iTime));
-    vec2 center6 = resolution.xy * 0.5 + (resolution.y * 0.35) * vec2(sin(5.0 * iTime), cos(5.0 * iTime));
-    vec2 center7 = resolution.xy * 0.5 - (resolution.y * 0.35) * vec2(-cos(5.0 * iTime), sin(5.0 * iTime));
-    vec2 center8 = resolution.xy * 0.5 - (resolution.y * 0.35) * vec2(sin(5.0 * iTime), cos(5.0 * iTime));
-    vec2 center9 = resolution.xy * 0.5 + (resolution.y * cos(iTime)) * vec2(cos(5.0 * iTime), sin(5.0 * iTime));
-    vec2 center10 = resolution.xy * 0.5 + (resolution.y * cos(iTime)) * vec2(-sin(5.0 * iTime), cos(5.0 * iTime));
-    vec2 center11 = resolution.xy * 0.5 - (resolution.y * cos(iTime)) * vec2(cos(5.0 * iTime), sin(5.0 * iTime));
-    vec2 center12 = resolution.xy * 0.5 - (resolution.y * cos(iTime)) * vec2(-sin(5.0 * iTime), cos(5.0 * iTime));
-    vec2 center13 = resolution.xy * 0.5 + (resolution.y * sin(iTime)) * vec2(-cos(5.0 * iTime), sin(5.0 * iTime));
-    vec2 center14 = resolution.xy * 0.5 + (resolution.y * sin(iTime)) * vec2(sin(5.0 * iTime), cos(5.0 * iTime));
-    vec2 center15 = resolution.xy * 0.5 - (resolution.y * sin(iTime)) * vec2(-cos(5.0 * iTime), sin(5.0 * iTime));
-    vec2 center16 = resolution.xy * 0.5 - (resolution.y * sin(iTime)) * vec2(sin(5.0 * iTime), cos(5.0 * iTime));
+    // aspect ratio = screen width / screen height
+    aspect = resolution.x * resolutionInv.y;
+
+    //using noise as random to get samples
+    float random_sample_x = (nextFloat(int(seed),1.0)+1.0) / 2.0;
+    float random_sample_y = (nextFloat(int(seed),1.0)+1.0) / 2.0;
     
-    // determines the radius of two circle sizes
-    float radius1 = resolution.y * 0.05;
-    float radius2 = resolution.y * 0.1;
+    // uv = screen-space coordinate = [0, 1) = coord / resolution
+    uv = vec2((fragCoord.x + random_sample_x)* resolutionInv.x,
+              (fragCoord.y + random_sample_y)* resolutionInv.y);
+
+    // ndc = normalized device coordinate = [-1, +1) = uv*2 - 1
+    ndc = uv * 2.0 - 1.0;
+
+    // viewport: x = [-aspect*h/2, +aspect*h/2), y = [-h/2, +h/2)
+    viewport = ndc * (vec2(aspect, 1.0) * (viewportHeight * 0.5));
+}
+
+// hit_record: keeps track of components related to hitting an object
+//	  p:		  vector of hit
+//	  normal:	  normal vector
+//	  t:		  time
+//	  front_face: true if ray hits face, false if it does not
+struct hit_record 
+{
+    vec4 p;
+    vec4 normal;
+    float t;
+    bool front_face;
+};
     
-    // determines if pixel is in one of the circles
-    float dist1 = length(fragCoord.xy - center1);
-    float dist2 = length(fragCoord.xy - center2);
-    float dist3 = length(fragCoord.xy - center3);
-    float dist4 = length(fragCoord.xy - center4);
-    float dist5 = length(fragCoord.xy - center5);
-    float dist6 = length(fragCoord.xy - center6);
-    float dist7 = length(fragCoord.xy - center7);
-    float dist8 = length(fragCoord.xy - center8);
-    float dist9 = length(fragCoord.xy - center9);
-    float dist10 = length(fragCoord.xy - center10);
-    float dist11 = length(fragCoord.xy - center11);
-    float dist12 = length(fragCoord.xy - center12);
-    float dist13 = length(fragCoord.xy - center13);
-    float dist14 = length(fragCoord.xy - center14);
-    float dist15 = length(fragCoord.xy - center15);
-    float dist16 = length(fragCoord.xy - center16);
+// circle: struct to keep a circle's components together
+//	  center: coordinates of the center of the circle
+//	  radius: length of the radius of the circle
+struct circle 
+{
+    vec4 center;
+    float radius;
+};
     
-    // determines if pixel belongs in checkerboard
-    if (mod(fragCoord.x / (resolution.y / (9.0 * cos((2.0 / 3.0) * iTime))), 2.0) > 1.0)
-        whiteCol = true;
+// set_face_normal
+//    rayDirection: output direction of ray from origin
+//    rayOrigin:    output origin point of ray
+//	  outward_normal
+//    front_face
+//    normal
+void set_face_normal(in vec4 rayDirection, in vec4 rayOrigin, 
+                     in vec4 outward_normal, out bool front_face, out vec4 normal) 
+{
+    // front_face = does this ray point in the same direction as the normalized ray?
+	front_face = dot(rayDirection, outward_normal) < 0.0;
+    // normal = direction that the ray is facing
+	normal = front_face ? outward_normal :-outward_normal;
+}
     
-    if (mod(fragCoord.y / (resolution.y / (9.0 * cos(0.5 * iTime))), 2.0) > 1.0)
-        whiteRow = true;
+
+// calcRay: calculate the ray direction and origin for the current pixel
+//    rayDirection: output direction of ray from origin
+//    rayOrigin:    output origin point of ray
+//    viewport:     input viewing plane coordinate (use above function to calculate)
+//    focalLength:  input distance to viewing plane
+void calcRay(out vec4 rayDirection, out vec4 rayOrigin,
+             in vec2 viewport, in float focalLength)
+{
+    // ray origin relative to viewer is the origin
+    // w = 1 because it represents a point; can ignore when using
+    rayOrigin = vec4(0.0, 0.0, 0.0, 1.0);
+
+    // ray direction relative to origin is based on viewing plane coordinate
+    // w = 0 because it represents a direction; can ignore when using
+    rayDirection = vec4(viewport.x, viewport.y, -focalLength, 0.0);
+}
+
+// rayAt: finds position of rat at time t
+//    rayDirection: input ray direction
+//    rayOrigin:    input ray origin
+//	  t:			time
+vec4 rayAt(in vec4 rayDirection, in vec4 rayOrigin, float t)  
+{
+	return rayOrigin + t*rayDirection;
+}
+
+// hit_Sphere: calculate collision of ray onto sphere given a ray and sphere
+//    sphere:		input sphere to collide with
+//    rayDirection: input ray direction
+//    rayOrigin:    input ray origin
+//	  t_min:		input temp minimum
+//	  t_max:		input temp maximum
+//	  rec:			output 
+bool hit_Sphere(in circle sphere, 
+                in vec4 rayDirection, in vec4 rayOrigin,
+               in float t_min, in float t_max, out hit_record rec)  
+{
+    // various arrays used for calculations later on
+    vec4 oc = rayOrigin - sphere.center;
+    float a = length(rayDirection)*length(rayDirection);
+    float half_b = dot(oc, rayDirection);
+    float c = length(oc)*length(oc) - sphere.radius*sphere.radius;
+
+    // determines if object will get hit
+    float discriminant = half_b*half_b - a*c;
+
+    if (discriminant > 0.0) {
+        // calculate values used later in functions
+        float root = sqrt(discriminant);
+        float temp = (-half_b - root) / a;
         
-    // determines if pixel belongs in circle
-    if (dist1 < radius1 || dist2 < radius1 || dist3 < radius1 || dist4 < radius1 || dist5 < radius1 || dist6 < radius1 || dist7 < radius1 || dist8 < radius1)
-        color = 0.5 + 0.5 * sin(iTime + (fragCoord / resolution).xyx + vec3(0, 2, 4));
-    else if (dist9 < radius2 || dist10 < radius2 || dist11 < radius2 || dist12 < radius2 || dist13 < radius2 || dist14 < radius2 || dist15 < radius2 || dist16 < radius2)
-        color = 0.5 + 0.5 * -sin(iTime + (fragCoord / resolution).xyx + vec3(0, 2, 4));
-    else if (whiteCol != whiteRow)
-        color = 0.5 + 0.5 * cos(iTime + (fragCoord / resolution).xyx + vec3(0, 2, 4));
-    else
-        color = 0.5 + 0.5 * cos(iTime + (-fragCoord / resolution).xyx + vec3(0, 2, 4));
-    
-        // returns color of pixel
-    return vec4(color, 1.0);
+        // tests if temp is in the range of values
+        if (temp < t_max && temp > t_min) {
+            rec.t = temp;
+            rec.p = rayAt(rayDirection, rayOrigin, rec.t);
+            vec4 outward_normal = (rec.p - sphere.center) / sphere.radius;
+            set_face_normal(rayDirection,rayOrigin, outward_normal,rec.front_face,rec.normal);
+            return true;
+        }
+        
+        // recalculates temp
+        temp = (-half_b + root) / a;
+        
+        // tests if temp is in the range of values
+        if (temp < t_max && temp > t_min) {
+            rec.t = temp;
+            rec.p = rayAt(rayDirection, rayOrigin, rec.t);
+            vec4 outward_normal = (rec.p - sphere.center) / sphere.radius;
+            set_face_normal(rayDirection,rayOrigin, outward_normal,rec.front_face,rec.normal);
+
+            return true;
+        }
+    }
+    return false;
 }
 
+// hit_list: calculate if list of objects collide with rays
+//    objects:		input list of spheres
+//    rayDirection: input ray direction
+//    rayOrigin:    input ray origin
+//	  t_min:		input temp minimum
+//	  t_max:		input temp maximum
+//	  rec:			output 
+bool hit_List(in circle objects[2],
+              in vec4 rayDirection, in vec4 rayOrigin,
+              in float t_min, in float t_max, out hit_record rec)  
+{
+    // vlues used later on
+    hit_record temp_rec;
+    bool hit_anything = false;
+    float closest_so_far = t_max;
+    
+	// loops through objects
+    for (int i =0;i < 2;i++)
+    {
+        // tests if current object is colliding with sphere
+        if (hit_Sphere(objects[i], rayDirection,rayOrigin,t_min, closest_so_far, temp_rec)) {
+            hit_anything = true;
+            closest_so_far = temp_rec.t;
+            rec = temp_rec;
+        }
+    }
+
+    return hit_anything;
+}
+
+// calcColor: calculate the color of a pixel given a ray
+//    rayDirection: input ray direction
+//    rayOrigin:    input ray origin
+//	  world:		input array of sphere objects
+vec4 calcColor(in vec4 rayDirection, in vec4 rayOrigin, in circle world[2])
+{
+    hit_record rec;
+    if (hit_List(world,rayDirection,rayOrigin,0.0,9999999999.0,rec)) {
+        return 0.5 * (rec.normal + vec4(1.0,1.0,1.0,0.0));
+    }
+        
+    vec4 unit_direction = normalize(rayDirection);
+    
+    float t = 0.5*(unit_direction.y + 1.0);
+    return (1.0-t)*vec4(1.0, 1.0, 1.0,0.0) + t*vec4(0.5, 0.7, 1.0,0.0);
+        
+    // DUMMY RESULT: OUTPUT RAY DIRECTION AS-IS
+    // -> what does the ray look like as color?
+    //return rayDirection;
+}
+
+
+// mainImage: process the current pixel (exactly one call per pixel)
+//    fragColor: output final color for current pixel
+//    fragCoord: input location of current pixel in image (in pixels)
 void mainImage(out vec4 fragColor, in vec2 fragCoord)
 {
-    //fragColor = myEffect0(fragCoord);
-    //fragColor = myEffect1(fragCoord, iResolution.xy);
-    //fragColor = myEffect2(fragCoord, iResolution.xy);
-    fragColor = myEffect3(fragCoord, iResolution.xy);
+    // viewing plane (viewport) info
+    vec2 viewport, ndc, uv, resolutionInv;
+    float aspect;
+    const float viewportHeight = 2.0, focalLength = 1.0;
+
+    // ray
+    vec4 rayDirection, rayOrigin;
+
+    //hittables
+    circle world[2] = circle[2](circle(vec4(0.0,0.0,-1.0,1.0), 0.5),
+                                circle(vec4(0.0,-100.5,-1.0,1.0), 100.0));
+
+    // how many times to get color
+    float samples_per_pixel = 100.0;
+    
+    // color
+    vec4 color = vec4(0.0, 0.0, 0.0, 0.0);
+
+    
+    
+    for (float i = 0.0; i < samples_per_pixel;i++)
+    {        
+        // setup
+        calcViewport(viewport, ndc, uv, aspect, resolutionInv,
+                     viewportHeight, fragCoord, iResolution.xy,iTime);
+        
+        calcRay(rayDirection, rayOrigin,
+                viewport, focalLength);
+        
+        color = color + calcColor(rayDirection, rayOrigin,world);        
+    }
+    
+    fragColor = color / samples_per_pixel;
+
+    // TEST COLOR:
+    //  -> what do the other things calculated above look like?
+    //fragColor = vec4(viewport, 0.0, 0.0);
+    //fragColor = vec4(ndc, 0.0, 0.0);
+    //fragColor = vec4(uv, 0.0, 0.0);
 }
