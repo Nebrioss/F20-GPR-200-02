@@ -166,26 +166,39 @@ void initRayOrtho(out sRay ray,
 }
 
 
-struct sLight
-{
-    vec4 sCenter;
-    vec3 sColor;
-    float sIntensity;
-};
-
-void initLight(out sLight light, in vec4 center, in vec3 color, in float intensity)
-{
-    light.sCenter = center;
-    light.sColor = color;
-    light.sIntensity = intensity;
-}
-
-
 //------------------------------------------------------------
 // RENDERING FUNCTIONS
 
+// Step 1 code
+// setUpLocation: determine the location of the pixel
+// 	  px: pixel coordinate
+//	  vp: viewport
+sCoord setUpLocation(sCoord px, sViewport vp)
+{
+    sDCoord res = iChannelResolution[0].xy;
+    sScalar ratio = res.y * vp.resolutionInv.y;
+    return ratio * px / res;
+}
+
+// step1Effect: cross fade between two 2D textures
+// 	  channel0: first 2D texture channel
+// 	  channel1: second 2D texture channel
+// 	  px:		pixel coordinate
+//	  vp:		viewport
+vec4 step1Effect(sampler2D channel0, sampler2D channel1, sCoord px, sViewport vp)
+{
+    sCoord loc = setUpLocation(px, vp);
+    
+    vec4 tex0 = texture(channel0, loc);
+    vec4 tex1 = texture(channel1, loc);
+    
+    return mix(tex0, tex1, 0.5 + 0.5 * cos(iTime));
+}
+
 
 // Step 2 code
+// wave2D: distorts 2D texture
+// 	  originalLocation: original pixel location
 sCoord wave2D(in sCoord originalLocation)
 {
     sCoord deformedLocation;
@@ -194,7 +207,81 @@ sCoord wave2D(in sCoord originalLocation)
     return deformedLocation;
 }
 
+// step2Effect: distorts a 2D texture
+// 	  channel: 2D texture channel
+// 	  px:	   pixel coordinate
+//	  vp:	   viewport
+vec4 step2Effect(sampler2D channel, sCoord px, sViewport vp)
+{
+    sCoord loc = setUpLocation(px, vp);
+    loc = wave2D(loc);
+    return texture(channel, loc);
+}
+
+
+// Step 3 code
+// sLight: struct to keep light elements together
+//	  sCenter: center of light
+//	  sColor: color of light
+//	  sIntensity: intensity of light
+struct sLight
+{
+    vec4 sCenter;
+    vec3 sColor;
+    float sIntensity;
+};
+
+// initLight: initializing light
+//	  light: final light struct
+//	  center: center of light
+//	  color: color of light
+//	  intensity: intensity of light
+void initLight(out sLight light, in vec4 center, in vec3 color, in float intensity)
+{
+    light.sCenter = center;
+    light.sColor = color;
+    light.sIntensity = intensity;
+}
+
+// step3Effect: animates light circling around on a 2D texture
+// 	  channel: 2D texture channel
+// 	  px:	   pixel coordinate
+//	  vp:	   viewport
+vec4 step3Effect(sampler2D channel, sCoord px, sViewport vp)
+{
+    sCoord loc = setUpLocation(px, vp);
+    
+    sLight light;
+    initLight(light, vec4(iResolution.xy / 2.0, 10.0, 0.0), vec3(1.0, 0.75, 0.0), 100.0);
+    
+    light.sCenter.xy = vec2(0.5 * iResolution.x + 100.0 * cos(2.0 * iTime), 0.5 * iResolution.y + 100.0 * sin(2.0 * iTime));
+    
+    vec3 normal = normalize(vec3(vp.resolutionInv.xy, 1.0));
+    vec3 lightVector = normalize(light.sCenter.xyz - vec3(px, 0.0));
+    vec3 diffuseCoefficient = normal * lightVector;
+    
+    vec3 attenuation = 1.0 / (1.0 + ((light.sCenter.xyz - vec3(px, 0.0)) / light.sIntensity) + (((light.sCenter.xyz - vec3(px, 0.0)) * (light.sCenter.xyz - vec3(px, 0.0)) / (light.sIntensity * light.sIntensity))));
+    
+    vec3 diffuseIntensity = diffuseCoefficient * attenuation;
+    
+    return vec4(diffuseIntensity.bbb * light.sColor * texture(iChannel0, loc).xyz, 1.0);
+}
+
+
 // Step 4 code
+// rotateCube: rotates cubemap texture
+// 	  originalLocation: original pixel location
+vec3 rotateCube(in vec3 originalLocation)
+{
+    vec3 rotatedLocation;
+    mat2 rotationMatrix = mat2(cos(0.25 * iTime), -sin(0.25 * iTime), sin(0.25 * iTime), cos(0.25 * iTime));
+    rotatedLocation.xz = originalLocation.xz * rotationMatrix;
+    rotatedLocation.y = originalLocation.y;
+    return rotatedLocation;
+}
+
+// wave3D: distorts cubemap texture
+// 	  originalLocation: original pixel location
 vec3 wave3D(in vec3 originalLocation)
 {
     vec3 deformedLocation;
@@ -204,14 +291,17 @@ vec3 wave3D(in vec3 originalLocation)
     return deformedLocation;
 }
 
-vec3 rotateCube(in vec3 originalLocation)
+// step4Effect: rotates cube while adding a distortion effect
+// 	  channel: cubemap texture channel
+// 	  ray:	   ray hitting cube
+vec4 step4Effect(samplerCube channel, sRay ray)
 {
-    vec3 rotatedLocation;
-    mat2 rotationMatrix = mat2(cos(0.25 * iTime), -sin(0.25 * iTime), sin(0.25 * iTime), cos(0.25 * iTime));
-    rotatedLocation.xz = originalLocation.xz * rotationMatrix;
-    rotatedLocation.y = originalLocation.y;
-    return rotatedLocation;
+    vec3 cubeLoc = ray.direction.xyz;
+    cubeLoc = rotateCube(cubeLoc);
+    cubeLoc = wave3D(cubeLoc);
+    return texture(iChannel2, cubeLoc);
 }
+
 
 // calcColor: calculate the color of current pixel
 //	  vp:  input viewport info
@@ -230,65 +320,6 @@ color4 calcColor(in sViewport vp, in sRay ray)
     // texture (full-screen)
     //sampler2D tex = iChannel0;
     //sCoord loc = vp.uv; // relative to display (output)
-    
-    // Step 1 code
-    /*
-    sCoord px = vp.pixelCoord;
-    sDCoord res0 = iChannelResolution[0].xy;
-    sScalar ratio0 = res0.y * vp.resolutionInv.y;
-    sCoord loc0 = ratio0 * px / res0; // relative to texture (output)
-    //loc = ratio * loc + 0.1 * vec2(iTime, 0.0); // zoom
-    vec4 color0 = texture(iChannel0, loc0);
-    
-    sDCoord res1 = iChannelResolution[1].xy;
-    sScalar ratio1 = res1.y * vp.resolutionInv.y;
-    sCoord loc1 = ratio1 * px / res1;
-    vec4 color1 = texture(iChannel1, loc1);
-    
-    return mix(color0, color1, 0.5 + 0.5 * cos(iTime));
-	*/
-    
-    // Step 2 code
-    /*
-    sCoord px = vp.pixelCoord;
-    sDCoord res = iChannelResolution[0].xy;
-    sScalar ratio = res.y * vp.resolutionInv.y;
-    sCoord loc = px / res;
-    loc = wave(loc);
-    
-    return texture(iChannel0, loc);
-	*/
-    
-    // Step 3 code
-    /*
-    sCoord px = vp.pixelCoord;
-    sDCoord res = iChannelResolution[0].xy;
-    sScalar ratio = res.y * vp.resolutionInv.y;
-    sCoord loc = ratio * px / res;
-    
-    sLight light;
-    initLight(light, vec4(iResolution.xy / 2.0, 10.0, 0.0), vec3(1.0, 0.75, 0.0), 100.0);
-    
-    light.sCenter.xy = vec2(0.5 * iResolution.x + 100.0 * cos(2.0 * iTime), 0.5 * iResolution.y + 100.0 * sin(2.0 * iTime));
-    
-    vec3 normal = normalize(vec3(vp.resolutionInv.xy, 1.0));
-    vec3 lightVector = normalize(light.sCenter.xyz - vec3(px, 0.0));
-    vec3 diffuseCoefficient = normal * lightVector;
-    
-    vec3 attenuation = 1.0 / (1.0 + ((light.sCenter.xyz - vec3(px, 0.0)) / light.sIntensity) + (((light.sCenter.xyz - vec3(px, 0.0)) * (light.sCenter.xyz - vec3(px, 0.0)) / (light.sIntensity * light.sIntensity))));
-    
-    vec3 diffuseIntensity = diffuseCoefficient * attenuation;
-    
-    return vec4(diffuseIntensity.bbb * light.sColor * texture(iChannel0, loc).xyz, 1.0);
-*/
-    
-    // Step 4 code
-    
-    vec3 cubeLoc = ray.direction.xyz;
-    cubeLoc = rotateCube(cubeLoc);
-    cubeLoc = wave3D(cubeLoc);
-    return texture(iChannel2, cubeLoc);
-    
 
     //return texture(iChannel0, loc); // color
     //return texture(iChannel0, loc).rrrr; // grayscale
@@ -302,6 +333,14 @@ color4 calcColor(in sViewport vp, in sRay ray)
     // sampler type: 'sampler cube'
     //vec3 cubeLoc = ray.direction.xyz;
     //return texture(iChannel1, cubeLoc);
+    
+    
+    sCoord px = vp.pixelCoord;
+    
+    return step1Effect(iChannel0, iChannel1, px, vp);
+    //return step2Effect(iChannel0, px, vp);
+    //return step3Effect(iChannel0, px, vp);
+    //return step4Effect(iChannel2, ray);
 }
 
 
