@@ -169,6 +169,13 @@ void initRayOrtho(out sRay ray,
 //------------------------------------------------------------
 // RENDERING FUNCTIONS
 
+sCoord wave(in sCoord originalLocation)
+{
+    sCoord deformedLocation;
+    // do something
+    return deformedLocation;
+}
+
 // calcColor: calculate the color of current pixel
 //	  vp:  input viewport info
 //	  ray: input ray info
@@ -188,13 +195,31 @@ color4 calcColor(in sViewport vp, in sRay ray)
     //sCoord loc = vp.uv; // relative to display (output)
     
     sCoord px = vp.pixelCoord;
-    sDCoord res = iChannelResolution[0].xy;
-    sScalar ratio = res.y * vp.resolutionInv.y;
-    sCoord loc = px / res; // relative to texture (output)
-    loc = ratio * loc; // zoom
+    sDCoord res0 = iChannelResolution[0].xy;
+    sScalar ratio0 = res0.y * vp.resolutionInv.y;
+    sCoord loc0 = ratio0 * px / res0; // relative to texture (output)
+    //loc = ratio * loc + 0.1 * vec2(iTime, 0.0); // zoom
+    vec4 color0 = texture(iChannel0, loc0);
     
-    return texture(iChannel0, loc); // color
+    sDCoord res1 = iChannelResolution[1].xy;
+    sScalar ratio1 = res1.y * vp.resolutionInv.y;
+    sCoord loc1 = ratio1 * px / res1;
+    vec4 color1 = texture(iChannel1, loc1);
+    
+    return mix(color0, color1, 0.5 + 0.5 * cos(iTime));
+    
+    //return texture(iChannel0, loc); // color
     //return texture(iChannel0, loc).rrrr; // grayscale
+    
+    //testing for shading
+    //return vp.viewportPoint;
+    //return vec4(0.0, 0.0, 1.0, 1.0);
+    //return vec4(normalize(vec3(vp.viewportPoint.xy, 0.5)), 1.0);
+    
+    //cube map
+    // sampler type: 'sampler cube'
+    //vec3 cubeLoc = ray.direction.xyz;
+    //return texture(iChannel1, cubeLoc);
 }
 
 
