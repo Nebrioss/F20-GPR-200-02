@@ -166,6 +166,21 @@ void initRayOrtho(out sRay ray,
 }
 
 
+struct sLight
+{
+    vec4 sCenter;
+    vec3 sColor;
+    float sIntensity;
+};
+
+void initLight(out sLight light, in vec4 center, in vec3 color, in float intensity)
+{
+    light.sCenter = center;
+    light.sColor = color;
+    light.sIntensity = intensity;
+}
+
+
 //------------------------------------------------------------
 // RENDERING FUNCTIONS
 
@@ -177,6 +192,14 @@ sCoord wave(in sCoord originalLocation)
     deformedLocation.x = originalLocation.x + 0.1 * iTime;
     deformedLocation.y = originalLocation.y + 0.01 * cos(100.0 * originalLocation.x + iTime);
     return deformedLocation;
+}
+
+// Step 4 code
+vec3 rotateCube(in vec3 originalLocation)
+{
+    vec3 rotatedLocation;
+    
+    return rotatedLocation;
 }
 
 // calcColor: calculate the color of current pixel
@@ -215,7 +238,7 @@ color4 calcColor(in sViewport vp, in sRay ray)
 	*/
     
     // Step 2 code
-    
+    /*
     sCoord px = vp.pixelCoord;
     sDCoord res = iChannelResolution[0].xy;
     sScalar ratio = res.y * vp.resolutionInv.y;
@@ -223,11 +246,35 @@ color4 calcColor(in sViewport vp, in sRay ray)
     loc = wave(loc);
     
     return texture(iChannel0, loc);
-	
+	*/
     
     // Step 3 code
+    sCoord px = vp.pixelCoord;
+    sDCoord res = iChannelResolution[0].xy;
+    sScalar ratio = res.y * vp.resolutionInv.y;
+    sCoord loc = ratio * px / res;
     
+    sLight light;
+    initLight(light, vec4(iResolution.xy / 2.0, 10.0, 0.0), vec3(1.0, 0.75, 0.0), 100.0);
     
+    light.sCenter.xy = vec2(0.5 * iResolution.x + 100.0 * cos(2.0 * iTime), 0.5 * iResolution.y + 100.0 * sin(2.0 * iTime));
+    
+    vec3 normal = normalize(vec3(vp.resolutionInv.xy, 1.0));
+    vec3 lightVector = normalize(light.sCenter.xyz - vec3(px, 0.0));
+    vec3 diffuseCoefficient = normal * lightVector;
+    
+    vec3 attenuation = 1.0 / (1.0 + ((light.sCenter.xyz - vec3(px, 0.0)) / light.sIntensity) + (((light.sCenter.xyz - vec3(px, 0.0)) * (light.sCenter.xyz - vec3(px, 0.0)) / (light.sIntensity * light.sIntensity))));
+    
+    vec3 diffuseIntensity = diffuseCoefficient * attenuation;
+    
+    return vec4(diffuseIntensity.bbb * light.sColor * texture(iChannel0, loc).xyz, 1.0);
+    
+    // Step 4 code
+    /*
+    vec3 cubeLoc = ray.direction.xyz;
+    return texture(iChannel2, cubeLoc);
+    */
+
     //return texture(iChannel0, loc); // color
     //return texture(iChannel0, loc).rrrr; // grayscale
     
