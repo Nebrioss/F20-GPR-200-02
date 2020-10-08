@@ -186,7 +186,7 @@ void initLight(out sLight light, in vec4 center, in vec3 color, in float intensi
 
 
 // Step 2 code
-sCoord wave(in sCoord originalLocation)
+sCoord wave2D(in sCoord originalLocation)
 {
     sCoord deformedLocation;
     deformedLocation.x = originalLocation.x + 0.1 * iTime;
@@ -195,10 +195,21 @@ sCoord wave(in sCoord originalLocation)
 }
 
 // Step 4 code
+vec3 wave3D(in vec3 originalLocation)
+{
+    vec3 deformedLocation;
+    deformedLocation.x = originalLocation.x + 0.1 * iTime;
+    deformedLocation.y = originalLocation.y + 0.01 * cos(100.0 * originalLocation.x + iTime);
+    deformedLocation.z = originalLocation.z;
+    return deformedLocation;
+}
+
 vec3 rotateCube(in vec3 originalLocation)
 {
     vec3 rotatedLocation;
-    
+    mat2 rotationMatrix = mat2(cos(0.25 * iTime), -sin(0.25 * iTime), sin(0.25 * iTime), cos(0.25 * iTime));
+    rotatedLocation.xz = originalLocation.xz * rotationMatrix;
+    rotatedLocation.y = originalLocation.y;
     return rotatedLocation;
 }
 
@@ -249,6 +260,7 @@ color4 calcColor(in sViewport vp, in sRay ray)
 	*/
     
     // Step 3 code
+    /*
     sCoord px = vp.pixelCoord;
     sDCoord res = iChannelResolution[0].xy;
     sScalar ratio = res.y * vp.resolutionInv.y;
@@ -268,12 +280,15 @@ color4 calcColor(in sViewport vp, in sRay ray)
     vec3 diffuseIntensity = diffuseCoefficient * attenuation;
     
     return vec4(diffuseIntensity.bbb * light.sColor * texture(iChannel0, loc).xyz, 1.0);
+*/
     
     // Step 4 code
-    /*
+    
     vec3 cubeLoc = ray.direction.xyz;
+    cubeLoc = rotateCube(cubeLoc);
+    cubeLoc = wave3D(cubeLoc);
     return texture(iChannel2, cubeLoc);
-    */
+    
 
     //return texture(iChannel0, loc); // color
     //return texture(iChannel0, loc).rrrr; // grayscale
