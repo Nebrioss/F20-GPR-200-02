@@ -1,0 +1,57 @@
+// GLSL STARTER CODE BY DANIEL S. BUCKSTEIN
+//  -> BUFFER C TAB (final)
+
+//------------------------------------------------------------
+// SHADERTOY MAIN
+
+// mainImage: process the current pixel (exactly one call per pixel)
+//    fragColor: output final color for current pixel
+//    fragCoord: input location of current pixel in image (in pixels)
+void mainImage(out color4 fragColor, in sCoord fragCoord)
+{
+    // setup
+    // test UV for input image
+    sCoord uv = fragCoord / iChannelResolution[0].xy;
+    
+    // TESTING
+    // set iChannel0 to 'Misc/Buffer A' and fetch sample
+    float shift = 1.0 / iChannelResolution[0].y;
+    /*fragColor = (1.0 * texture(iChannel0, vec2(uv.x + shift, uv.y + shift)) +
+        2.0 * texture(iChannel0, vec2(uv.x, uv.y + shift)) +
+        1.0 * texture(iChannel0, vec2(uv.x - shift, uv.y + shift)) +
+        2.0 * texture(iChannel0, vec2(uv.x + shift, uv.y)) +
+        4.0 * texture(iChannel0, vec2(uv.x, uv.y)) +
+        2.0 * texture(iChannel0, vec2(uv.x - shift, uv.y)) +
+        1.0 * texture(iChannel0, vec2(uv.x + shift, uv.y - shift)) +
+        2.0 * texture(iChannel0, vec2(uv.x, uv.y - shift)) +
+        1.0 * texture(iChannel0, vec2(uv.x - shift, uv.y - shift))) / 16.0;*/
+    fragColor = (1.0 * texture(iChannel0, vec2(uv.x + 2.0 * shift, uv.y + 2.0 * shift)) +
+        4.0 * texture(iChannel0, vec2(uv.x + shift, uv.y + 2.0 * shift)) +
+        6.0 * texture(iChannel0, vec2(uv.x, uv.y + 2.0 * shift)) +
+        4.0 * texture(iChannel0, vec2(uv.x - shift, uv.y + 2.0 * shift)) +
+        1.0 * texture(iChannel0, vec2(uv.x - 2.0 * shift, uv.y + 2.0 * shift)) +
+                 
+        4.0 * texture(iChannel0, vec2(uv.x + 2.0 * shift, uv.y + shift)) +
+        16.0 * texture(iChannel0, vec2(uv.x + shift, uv.y + shift)) +
+        24.0 * texture(iChannel0, vec2(uv.x, uv.y + shift)) +
+        16.0 * texture(iChannel0, vec2(uv.x - shift, uv.y + shift)) +
+        4.0 * texture(iChannel0, vec2(uv.x - 2.0 * shift, uv.y + shift)) +
+                 
+        6.0 * texture(iChannel0, vec2(uv.x + 2.0 * shift, uv.y)) +
+        24.0 * texture(iChannel0, vec2(uv.x + shift, uv.y)) +
+        32.0 * texture(iChannel0, vec2(uv.x, uv.y)) +
+        24.0 * texture(iChannel0, vec2(uv.x - shift, uv.y)) +
+        6.0 * texture(iChannel0, vec2(uv.x - 2.0 * shift, uv.y)) +
+                 
+        4.0 * texture(iChannel0, vec2(uv.x + 2.0 * shift, uv.y - shift)) +
+        16.0 * texture(iChannel0, vec2(uv.x + shift, uv.y - shift)) +
+        24.0 * texture(iChannel0, vec2(uv.x, uv.y - shift)) +
+        16.0 * texture(iChannel0, vec2(uv.x - shift, uv.y - shift)) +
+        4.0 * texture(iChannel0, vec2(uv.x - 2.0 * shift, uv.y - shift)) +
+                 
+        1.0 * texture(iChannel0, vec2(uv.x + 2.0 * shift, uv.y - 2.0 * shift)) +
+        4.0 * texture(iChannel0, vec2(uv.x + shift, uv.y - 2.0 * shift)) +
+        6.0 * texture(iChannel0, vec2(uv.x, uv.y - 2.0 * shift)) +
+        4.0 * texture(iChannel0, vec2(uv.x - shift, uv.y - 2.0 * shift)) +
+        1.0 * texture(iChannel0, vec2(uv.x - 2.0 * shift, uv.y - 2.0 * shift))) / 256.0;
+}
