@@ -172,7 +172,7 @@ void initRayOrtho(out sRay ray,
 // calcColor: calculate the color of current pixel
 //	  vp:  input viewport info
 //	  ray: input ray info
-color4 calcColor(in sViewport vp, in sRay ray)
+color4 calcColor(in sViewport vp, in sCoord fragCoord, in sRay ray)
 {
     sCoord px = vp.pixelCoord;
     sDCoord res = iChannelResolution[0].xy;
@@ -180,9 +180,21 @@ color4 calcColor(in sViewport vp, in sRay ray)
     sCoord loc = ratio * px / res;
     
     sCoord center = 0.5 * iResolution.xy;
+    float blackRadius = 0.1 * res.y;
     
-    if (length(ray.direction.xy - center) <= 100.0)
+    float gravitationalConstant = 6.67408 * pow(10.0, -11.0);
+    float speedLight = 299792458.0;
+    float mass = 10.0;
+    float schwartzRadius = 2.0 * gravitationalConstant * mass / (speedLight * speedLight);
+    
+    float dist = length(fragCoord.xy - center);
+    if (dist <= blackRadius)
         return color4(0.0, 0.0, 0.0, 1.0);
+    else if (dist <= schwartzRadius)
+    {
+        ray.direction.xy = (ray.direction.xy - center) / (schwartzRadius - length(ray.origin.xy));
+        loc = ray.direction.xy;
+    }
     
     return texture(iChannel0, loc);
 }
@@ -209,5 +221,5 @@ void mainImage(out color4 fragColor, in sCoord fragCoord)
     // render
     initViewport(vp, viewportHeight, focalLength, fragCoord, iResolution.xy);
     initRayPersp(ray, eyePosition, vp.viewportPoint.xyz);
-    fragColor += calcColor(vp, ray);
+    fragColor += calcColor(vp, fragCoord, ray);
 }
