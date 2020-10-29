@@ -8,7 +8,7 @@ layout (location = 0) out vec4 rtFragColor;
 //out vec4 rtFragColor;
 
 // VARYING
-in vec4 vColor;
+in vec4 vColor; 
 
 void main()
 {
