@@ -8,6 +8,11 @@ layout (location = 0) in vec4 aPosition;
 layout (location = 1) in vec3 aNormal;
 //in vec4 aPosition;
 
+// e.g. 2D uv: texture coordinate
+// TEXTURE SPACE
+//layout (location = 2) in vec2 aTexcoord;
+layout (location = 2) in vec4 aTexcoord;
+
 // TRANSFORM UNIFORMS
 uniform mat4 uModelMat;
 uniform mat4 uViewMat;
@@ -21,6 +26,9 @@ uniform mat4 uViewProjMat;
 
 // PER-FRAGMENT: send stuff to the FS to calculate final
 out vec4 vNormal;
+
+//out vec2 vTexcoord;
+out vec4 vTexcoord;
 
 void main()
 {
@@ -53,6 +61,13 @@ void main()
 	vec3 norm_camera = normalMat * aNormal;
 	//vec3 norm_camera = mat3(modelViewMat) * aNormal;
 	
+	// TEXCOORD PIPELINE
+	mat4 atlasMat = mat4(0.5, 0.0, 0.0, 0.0,
+						 0.0, 0.5, 0.0, 0.0,
+						 0.0, 0.0, 1.0, 0.0,
+						 0.25, 0.25, 0.0, 1.0);
+	vec4 uv_atlas = atlasMat * aTexcoord;
+	
 	// OPTIONAL: set varyings
 	//vColor = vec4(1.0, 0.5, 0.0, 1.0);
 	
@@ -64,4 +79,9 @@ void main()
 	// PER-FRAGMENT: pass things that FS needs to calculate final color
 	//vNormal = vec4(aNormal, 0.0);
 	vNormal = vec4(norm_camera, 0.0);
+	
+	//vTexcoord = aTexcoord;
+	vTexcoord = uv_atlas;
+	
+	//gl_Position = uProjMat * modelViewMat * aTexcoord;
 }

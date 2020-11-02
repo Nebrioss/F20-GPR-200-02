@@ -15,6 +15,9 @@ layout (location = 0) out vec4 rtFragColor;
 // PER-FRAGMENT: receive stuff used for final color
 in vec4 vNormal;
 
+//in vec2 vTexcoord;
+in vec4 vTexcoord;
+
 void main()
 {
 	//rtFragColor = vec4(0.5, 0.0, 0.25, 1.0);
@@ -25,4 +28,7 @@ void main()
 	// PER-FRAGMENT: calculate final color here using inputs
 	vec4 N = normalize(vNormal);
 	rtFragColor = vec4(0.5 * N.xyz + 0.5, 1.0);
+	
+	//rtFragColor = vec4(vTexcoord, 0.0, 1.0);
+	rtFragColor = vTexcoord;
 }
