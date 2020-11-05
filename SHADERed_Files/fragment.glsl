@@ -13,7 +13,7 @@ uniform sampler2D uTexture;
 // VARYING
 
 // PER-VERTEX: receive the final color
-//in vec4 vColor;
+in vec4 vColor;
 
 // PER-FRAGMENT: receive stuff used for final color
 in vec4 vNormal;
@@ -73,8 +73,11 @@ void main()
 	rtFragColor = vTexcoord;
 	
 	// used for testing light
-	rtFragColor = vec4(1.0, 0.5, 0.0, 1.0);
+	rtFragColor = vec4(1.0, 1.0, 1.0, 1.0);
+	
+	// USING LIGHTS
+	rtFragColor = vColor;
 	
 	// USING TEXTURE
-	//rtFragColor = texture(uTexture, 2.0 * vTexcoord.xy + vec2(0.0, 0.0));
+	//rtFragColor = texture(uTexture, 2.0 * vTexcoord.xy);
 }

@@ -25,7 +25,7 @@ uniform sampler2D uTexture;
 // VARYING
 
 // PER-VERTEX: send final color
-//out vec4 vColor;
+out vec4 vColor;
 
 // PER-FRAGMENT: send stuff to the FS to calculate final
 out vec4 vNormal;
@@ -59,16 +59,38 @@ void initLight(out sLight light, in vec4 center, in vec3 color, in float intensi
     light.sIntensity = intensity;
 }
 
-vec3 lambertReflect(sLight light)
+vec3 lambertReflect(sLight light, vec3 position, vec3 normal)
 {
-    vec3 lightVector = normalize(light.sCenter.xyz - vec3(aPosition));
-    vec3 diffuseCoefficient = aNormal * lightVector;
+    vec3 lightVector = normalize(light.sCenter.xyz - vec3(position));
+    vec3 diffuseCoefficient = normal * lightVector;
     
-    vec3 attenuation = 1.0 / (1.0 + ((light.sCenter.xyz - vec3(aPosition)) / light.sIntensity) + (((light.sCenter.xyz - vec3(aPosition)) * (light.sCenter.xyz - vec3(aPosition)) / (light.sIntensity * light.sIntensity))));
+    vec3 attenuation = 1.0 / (1.0 + ((light.sCenter.xyz - vec3(position)) / light.sIntensity) + (((light.sCenter.xyz - vec3(position)) * (light.sCenter.xyz - vec3(position)) / (light.sIntensity * light.sIntensity))));
     
     vec3 diffuseIntensity = diffuseCoefficient * attenuation;
 
 	return vec3(diffuseIntensity * light.sColor);
+}
+
+float specIntensity(sLight light, vec3 position, vec3 normal, vec3 rayDirection)
+{
+	float scale = dot(rayDirection, rayDirection);
+	float ks = dot(reflect(normalize(light.sCenter.xyz - vec3(position)), normal), rayDirection / scale);
+
+	return pow(ks, 16.0);
+}
+
+vec3 finalLight(sLight light, vec3 position, vec3 normal, vec3 rayDirection)
+{
+	return (lambertReflect(light, position, normal) * vec3(0.0, 0.0, 0.5) + specIntensity(light, position, normal, rayDirection) * vec3(1.0, 1.0, 1.0)) * light.sColor;
+}
+
+vec3 combineLights(sLight lightOne, sLight lightTwo, sLight lightThree, vec3 position, vec3 normal, vec3 rayDirection)
+{
+	vec3 finalColor = finalLight(lightOne, position, normal, rayDirection);
+	finalColor += finalLight(lightTwo, position, normal, rayDirection);
+	finalColor += finalLight(lightThree, position, normal, rayDirection);
+	
+	return finalColor + 0.5 * vec3(1.0, 1.0, 1.0);
 }
 
 
@@ -129,11 +151,13 @@ void main()
 	
 	// LIGHTS
 	sLight lightOne;
-    initLight(lightOne, vec4(1.0, 0.0, 1.0, 0.0), vec3(1.0, 0.75, 0.0), 100.0);
+    initLight(lightOne, vec4(-1.0, -1.0, -1.0, 0.0), vec3(1.0, 1.0, 1.0), 0.5);
     
 	sLight lightTwo;
-    initLight(lightTwo, vec4(1.0, 0.0, 1.0, 0.0), vec3(1.0, 0.75, 0.0), 100.0);
+    initLight(lightTwo, vec4(1.0, 1.0, 1.0, 0.0), vec3(1.0, 1.0, 1.0), 0.5);
     
 	sLight lightThree;
-    initLight(lightThree, vec4(1.0, 0.0, 1.0, 0.0), vec3(1.0, 0.75, 0.0), 100.0);
+    initLight(lightThree, vec4(0.0, 1.0, 0.0, 0.0), vec3(1.0, 1.0, 1.0), 0.5);
+    
+    vColor = vec4(combineLights(lightOne, lightTwo, lightThree, aPosition.xyz, aNormal.xyz, aNormal.xyz), 1.0);
 }
