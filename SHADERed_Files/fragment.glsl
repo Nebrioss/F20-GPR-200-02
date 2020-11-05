@@ -35,5 +35,5 @@ void main()
 	rtFragColor = vTexcoord;
 	
 	// USING TEXTURE (hopefully)
-	rtFragColor = texture(uTexture, 5.0 * vTexcoord.xy);
+	rtFragColor = texture(uTexture, 2.0 * vTexcoord.xy);
 }
