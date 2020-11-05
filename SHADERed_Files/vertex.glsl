@@ -19,6 +19,9 @@ uniform mat4 uViewMat;
 uniform mat4 uProjMat;
 uniform mat4 uViewProjMat;
 
+// TEXTURE UNIFORM (hopefully works)
+uniform sampler2D uTexture;
+
 // VARYING
 
 // PER-VERTEX: send final color
@@ -62,10 +65,10 @@ void main()
 	//vec3 norm_camera = mat3(modelViewMat) * aNormal;
 	
 	// TEXCOORD PIPELINE
-	mat4 atlasMat = mat4(0.5, 0.0, 0.0, 0.0,
-						 0.0, 0.5, 0.0, 0.0,
+	mat4 atlasMat = mat4(0.5, 0.0, 0.0, 0.25,
+						 0.0, 0.5, 0.0, 0.25,
 						 0.0, 0.0, 1.0, 0.0,
-						 0.25, 0.25, 0.0, 1.0);
+						 0.0, 0.0, 0.0, 1.0);
 	vec4 uv_atlas = atlasMat * aTexcoord;
 	
 	// OPTIONAL: set varyings

@@ -7,6 +7,8 @@ precision highp float;
 layout (location = 0) out vec4 rtFragColor;
 //out vec4 rtFragColor;
 
+uniform sampler2D uTexture;
+
 // VARYING
 
 // PER-VERTEX: receive the final color
@@ -31,4 +33,7 @@ void main()
 	
 	//rtFragColor = vec4(vTexcoord, 0.0, 1.0);
 	rtFragColor = vTexcoord;
+	
+	// USING TEXTURE (hopefully)
+	rtFragColor = texture(uTexture, 5.0 * vTexcoord.xy);
 }
