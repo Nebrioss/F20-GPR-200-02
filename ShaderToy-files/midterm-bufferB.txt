@@ -1,0 +1,41 @@
+//------------------------------------------------------------
+// SHADERTOY MAIN
+
+// mainImage: process the current pixel (exactly one call per pixel)
+//    fragColor: output final color for current pixel
+//    fragCoord: input location of current pixel in image (in pixels)
+void mainImage(out color4 fragColor, in sCoord fragCoord)
+{
+    // viewing plane (viewport) inputs
+    const sBasis eyePosition = sBasis(0.0);
+    const sScalar viewportHeight = 2.0, focalLength = 1.5;
+    
+    // viewport info
+    sViewport vp;
+
+    // ray
+    sRay ray;
+    
+    // render
+    initViewport(vp, viewportHeight, focalLength, fragCoord, iResolution.xy);
+    initRayPersp(ray, eyePosition, vp.viewportPoint.xyz);
+    
+    sCoord uv = fragCoord / iChannelResolution[0].xy;
+    fragColor = texture(iChannel0, uv);
+    
+    vec3 blackHoleCenter = vec3(0.0, 0.0, -4.0);
+    float blackRadius = 0.2;
+    
+    sSphere blackSphere;
+    initSphere(blackSphere, blackHoleCenter, blackRadius);
+    
+    vec3 blackHoleDist;
+    blackHoleDist.xy = ray.direction.xy - blackHoleCenter.xy;
+    float blackHoleDistSq = dot(blackHoleDist.xy, blackHoleDist.xy);
+    float blackRadiusSq = blackSphere.sRadius * blackSphere.sRadius;
+    
+    if (blackHoleDistSq <= blackRadiusSq)
+    {
+        fragColor = color4(0.0, 0.0, 0.0, 1.0);
+    }
+}
