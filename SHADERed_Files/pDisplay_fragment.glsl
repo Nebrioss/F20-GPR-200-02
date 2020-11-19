@@ -9,7 +9,8 @@ layout (location = 0) out vec4 rtFragColor;
 in vec2 vTexcoord;
 
 uniform vec2 uResolution;
-uniform sampler2D uTex; // represented by integer (0)
+uniform sampler2D uTexScene; // represented by integer (0)
+uniform sampler2D uTexBackground;
 
 void main()
 {
@@ -18,10 +19,11 @@ void main()
 	// 2) something to do with attributes: texture coordinates
 	//vec2 uv = gl_FragCoord.xy / uResolution;
 	vec2 uv = vTexcoord;
-	vec4 col = texture(uTex, uv);
+	vec4 scene = texture(uTexScene, uv);
+	vec4 background = texture(uTexBackground, vec2(uv.x, uv.y + 0.7));
 
 	// testing
 	//rtFragColor = vec4(1.0, 0.5, 0.0, 1.0);
 	//rtFragColor = vec4(uv, 0.0, 1.0);
-	rtFragColor = col;
+	rtFragColor = mix(background, scene, scene.a);
 }
